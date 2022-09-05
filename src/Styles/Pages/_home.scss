@@ -1,122 +1,171 @@
 @use "/Abstracts" as *;
 
-.logo-ctnr {
-	&__title,
-	&__link {
-		$space-size: 1rem;
+.block {
+	display: grid;
+	gap: 1.5rem;
+	grid-auto-rows: min-content;
+	padding: 3rem;
+	border-radius: 0.5rem;
 
-		position: relative;
+	background-color: var(--clr-surface-300);
+	height: 80vh;
+	overflow-y: auto;
 
-		text-decoration: none;
-		text-align: center;
+	&::-webkit-scrollbar {
+		background-color: var(--clr-surface-300);
+		width: 0.5rem;
+		border-radius: 0.5rem;
 
-		transition: 150ms var(--ease-elastic-3);
-		transition-delay: 100ms;
-		transition-property: transform;
-
-		&::before {
-			// content: "";
-			position: absolute;
-			bottom: calc(100% + $space-size);
-			left: 50%;
-
-			transform: translateX(-50%) translateY(0);
-
-			border-radius: var(--radius-3);
-			border: 2px solid var(--bc, var(--blue-7));
-
-			width: 13rem;
-			padding: 0.5rem 1rem;
-
-			background-color: var(--clr-surface-100, var(--alpha_, 0.25));
-
-			font-size: var(--fsf-01);
-			text-align: center;
-
-			animation: showUp 200ms var(--ease-elastic-5);
-			backdrop-filter: blur(1rem);
-
-			@include supports-backdrop-filter(blur(1rem)) {
-				--alpha_: 0.875;
-			}
-		}
-
-		&::after {
-			position: absolute;
-			inset-inline: 0;
-			bottom: calc(100% - 0.125em);
-			height: $space-size * 1.125;
-		}
-
-		&:enter {
-			transform: scale(1.2) scaleZ(1) translateY(-6px);
-
-			&::after {
-				content: "";
-			}
-
-			&::before {
-				content: attr(aria-label);
-
-				--false-to-jit-0: var(--red-5);
-				--false-to-jit-1: var(--red-6);
-			}
-		}
-
-		&:nth-child(2)::before {
-			--bc: var(--green-5);
-		}
-		&:nth-child(3)::before {
-			--bc: var(--orange-9);
-		}
-		&:nth-child(4)::before {
-			--bc: var(--cyan-6);
-		}
-		&:nth-child(5)::before {
-			--bc: var(--indigo-5);
-		}
-		&:nth-child(6)::before {
-			--bc: var(--pink-5);
-		}
-		&:nth-child(7)::before {
-			--bc: var(--violet-5);
-		}
-		&:nth-child(8)::before {
-			--bc: var(--yellow-5);
-		}
-		&:nth-child(9)::before {
-			--bc: var(--indigo-0);
-		}
-		&:nth-child(10)::before {
-			--bc: var(--blue-7);
-		}
-	}
-
-	&__title {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		width: fit-content;
-		height: fit-content;
-
-		margin: auto;
-
-		&::before {
-			--bc: var(--red-5);
-			width: max-content;
+		&-thumb {
+			background-color: var(--clr-surface-500);
 		}
 	}
 }
 
-@keyframes showUp {
-	0%,
-	25% {
-		transform: translateX(-50%) translateY(2rem);
-		opacity: 0;
+.ul {
+	display: grid;
+	gap: inherit;
+}
+
+.item {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	// grid-template-rows: repeat(2, calc(2ex + 4px)) 1fr;
+	gap: 0.25rem;
+
+	padding: 1rem;
+	border-radius: 0.5rem;
+
+	background-color: var(--clr-surface-200);
+
+	&--check {
+		outline: 2px solid greenyellow;
 	}
 
-	100% {
-		transform: translateX(-50%) translateY(0);
-		opacity: 1;
+	.checkbox {
+		position: relative;
+
+		width: 1rem;
+		height: 1rem;
+
+		grid-row: 1/1;
+		grid-column: 1/1;
+
+		&:before {
+			content: "";
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+
+			border-radius: 0.5rem;
+			background-color: var(--clr-surface-300);
+		}
+
+		&--check::before {
+			outline: 4px solid greenyellow;
+			outline-offset: -4px;
+		}
+
+		> input {
+			position: absolute;
+			inset: 0;
+			opacity: 0;
+			width: 100%;
+			height: 100%;
+		}
 	}
+
+	.name {
+		grid-row: 1/1;
+		grid-column: 2/2;
+		max-width: Min(40ch, 100vw - 10rem);
+		color: var(--clr-surface-800);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		text-transform: capitalize;
+		font-weight: 600;
+		padding-right: 0.75rem;
+	}
+
+	.desc {
+		grid-row: 2/3;
+		grid-column: 2/2;
+
+		display: -webkit-box;
+		max-width: 200px;
+		-webkit-line-clamp: 4;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+
+		font-size: 0.875rem;
+		color: var(--clr-surface-600);
+	}
+
+	.remove,
+	.edit {
+		grid-column: 3/3;
+
+		font-size: 0.75rem;
+		border-radius: 0.25rem;
+		// padding: 0.125rem 0.25rem;
+		text-transform: capitalize;
+	}
+
+	.remove {
+		grid-row: 1/1;
+	}
+
+	.edit {
+		grid-row: 2/2;
+	}
+
+	.add {
+		grid-row: 4/4;
+		grid-column: 1/-1;
+		grid-template-columns: repeat(2, 1fr);
+
+		padding-inline: 0;
+		padding-block: 0.5rem 0;
+	}
+}
+
+.add {
+	display: grid;
+	grid-auto-flow: column;
+	grid-template-columns: repeat(2, 1fr) auto;
+	grid-auto-rows: auto;
+	gap: 0.25rem 1rem;
+
+	padding: 1rem;
+	border-radius: 0.5rem;
+
+	background-color: var(--clr-surface-200);
+
+	:is(input, button) {
+		grid-row: 1/1;
+		border-radius: 0.25rem;
+		padding: 0.25rem 1rem;
+	}
+
+	> input {
+		border: 0;
+	}
+
+	> button {
+		padding: 0.25rem 1rem;
+	}
+
+	.error {
+		grid-column: 1/-1;
+		grid-row: 2/2;
+		color: var(--clr-brand-200);
+	}
+}
+
+input,
+textarea,
+button {
+	background-color: var(--clr-surface-300);
 }

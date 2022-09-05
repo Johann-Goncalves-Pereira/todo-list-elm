@@ -2,11 +2,13 @@ module Pages.Home_ exposing (Model, Msg, page)
 
 import Components.Layout as Layout exposing (initLayout)
 import Components.Svg as SVG exposing (Logo(..))
+import Dict exposing (Dict)
 import Gen.Params.Home_ exposing (Params)
 import Gen.Route as Route
-import Html exposing (Html, a, div, h1, h2, h5, section, text)
-import Html.Attributes exposing (class, href, id, rel, tabindex, target)
+import Html exposing (Html, a, b, button, div, h1, h2, h5, input, label, li, p, section, text, textarea, ul)
+import Html.Attributes exposing (checked, class, classList, href, id, rel, tabindex, target, type_, value)
 import Html.Attributes.Aria exposing (ariaLabel, ariaLabelledby)
+import Html.Events exposing (onCheck, onClick, onInput)
 import Page
 import Request
 import Shared
@@ -28,12 +30,41 @@ page _ _ =
 
 
 type alias Model =
-    {}
+    { items : Dict Int Item
+    , id : Int
+    , editId : Maybe Int
+    , error : Maybe String
+    }
+
+
+type alias Item =
+    { check : Bool
+    , name : String
+    , description : String
+    }
+
+
+type alias Error =
+    { name : String
+    , desc : String
+    }
 
 
 init : Model
 init =
-    {}
+    { items = Dict.empty
+    , id = 0
+    , editId = Nothing
+    , error = Nothing
+    }
+
+
+initItem : Item
+initItem =
+    { check = False
+    , name = ""
+    , description = ""
+    }
 
 
 
@@ -41,14 +72,101 @@ init =
 
 
 type Msg
-    = ReplaceMe
+    = AddItem Item
+    | Check Int Bool
+    | InputName Int String
+    | InputDesc Int String
+    | Remove Int
+    | Edit Int
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        ReplaceMe ->
-            model
+        AddItem item_ ->
+            let
+                cleanItem =
+                    Dict.get model.id model.items
+                        |> Maybe.withDefault initItem
+
+                insetNew =
+                    if String.isEmpty cleanItem.name then
+                        { model | error = Just "Name is required" }
+
+                    else if String.isEmpty cleanItem.description then
+                        { model | error = Just "Description is required" }
+
+                    else
+                        { model
+                            | id = model.id + 1
+                            , items =
+                                Dict.insert model.id
+                                    { check = item_.check
+                                    , name = item_.name
+                                    , description = item_.description
+                                    }
+                                    model.items
+                            , error = Nothing
+                        }
+            in
+            insetNew
+
+        Check id_ check ->
+            let
+                item_ =
+                    Dict.get id_ model.items
+                        |> Maybe.withDefault initItem
+
+                updateName =
+                    \_ ->
+                        Just
+                            { item_
+                                | check = check
+                                , name = item_.name
+                                , description = item_.description
+                            }
+            in
+            { model | items = Dict.update id_ updateName model.items }
+
+        InputName id_ name ->
+            let
+                item_ =
+                    Dict.get id_ model.items
+                        |> Maybe.withDefault initItem
+
+                updateName =
+                    \_ ->
+                        Just
+                            { item_
+                                | check = item_.check
+                                , name = name
+                                , description = item_.description
+                            }
+            in
+            { model | items = Dict.update id_ updateName model.items }
+
+        InputDesc id_ desc ->
+            let
+                item_ =
+                    Dict.get id_ model.items
+                        |> Maybe.withDefault initItem
+
+                updateName =
+                    \_ ->
+                        Just
+                            { item_
+                                | check = item_.check
+                                , name = item_.name
+                                , description = desc
+                            }
+            in
+            { model | items = Dict.update id_ updateName model.items }
+
+        Remove id_ ->
+            { model | items = Dict.remove id_ model.items }
+
+        Edit id_ ->
+            { model | editId = Just id_ }
 
 
 
@@ -56,63 +174,77 @@ update msg model =
 
 
 view : Model -> View Msg
-view _ =
+view model =
     { title = "Revex - Home"
     , body =
         Layout.viewLayout
             { initLayout
                 | route = Route.Home_
-                , mainAttrs = [ class "flex flex-col gap-8 justify-center items-center" ]
-                , mainContent = viewPlaceholder
+                , mainAttrs = []
+                , mainContent = [ viewPage model ]
             }
     }
 
 
-viewPlaceholder : List (Html msg)
-viewPlaceholder =
-    [ h1
-        [ class "text-center text-2"
-        , id "placeholder"
-        ]
-        [ a
-            [ class "logo-ctnr__title bg-surface-200 px-7 py-3 rounded-xl gap-2"
-            , href "https://github.com/Johann-Goncalves-Pereira/Revex"
-            , target "_blank"
-            , rel "noopener noreferrer"
-            , tabindex 0
-            , ariaLabel "This template project, to start with all the tools you need faster."
-            ]
-            [ SVG.logo SVG.Revex, text "Revex" ]
-        ]
-    , section [ class "bg-surface-200 p-4 rounded-xl w-[min(70rem,100vw_-_4rem)] mb-8 md:p-8", ariaLabelledby "placeholder" ]
-        [ h2
-            [ class "text-center opacity-60 text-1"
-            ]
-            [ text "Start a Project with these features integrated" ]
-        , div [ class "logo-ctnr flex flex-wrap items-center justify-center mt-8 gap-4 md:gap-8" ] <|
-            List.map
-                (\{ svg, link, desc, name } ->
-                    a
-                        [ class "logo-ctnr__link grid grid-rows-[auto,max-content] gap-4 h-24 w-16 md:w-24 md:h-28"
-                        , href link
-                        , ariaLabel desc
-                        , target "_blank"
-                        , rel "noopener noreferrer"
-                        , tabindex 0
+viewPage : Model -> Html Msg
+viewPage model =
+    let
+        items =
+            Dict.get model.id model.items
+                |> Maybe.withDefault initItem
+    in
+    section [ class "block" ]
+        [ List.map
+            (\i ->
+                let
+                    item_ =
+                        Dict.get i model.items
+                            |> Maybe.withDefault initItem
+
+                    viewLi =
+                        li [ classList [ ( "item", True ), ( "item--check", item_.check ) ] ]
+
+                    view_ =
+                        [ label
+                            [ classList
+                                [ ( "checkbox", True )
+                                , ( "checkbox--check", item_.check )
+                                ]
+                            ]
+                            [ input [ type_ "checkbox", checked item_.check, onCheck <| Check i ] []
+                            ]
+                        , b [ class "name" ] [ text item_.name ]
+                        , p [ class "desc" ] [ text item_.description ]
+                        , button [ class "remove", onClick <| Remove i ] [ text "Remove" ]
+                        , button [ class "edit", onClick <| Edit i ] [ text "edit" ]
                         ]
-                        [ svg, h5 [ class "text-1 opacity-75" ] [ text name ] ]
-                )
-                [ --: Svg and Link
-                  { svg = SVG.logo SVG.Elm, link = "https://elm-lang.org", desc = "A delightful language for reliable web applications.", name = "Elm" }
-                , { svg = SVG.logo SVG.ElmSpa, link = "https://www.elm-spa.dev", desc = "Automatically generated a single page application for elm.", name = "Elm Spa" }
-                , { svg = SVG.logo SVG.PostCss, link = "https://postcss.org", desc = "A tool for transforming CSS with JavaScript.", name = "PostCss" }
-                , { svg = SVG.logo SVG.Tailwind, link = "https://tailwindcss.com", desc = "Rapidly build modern websites without ever leaving your HTML.", name = "Tailwind" }
-                , { svg = SVG.logo SVG.OpenProps, link = "https://open-props.style", desc = "Supercharged CSS variables.", name = "Open Props" }
-                , { svg = SVG.logo SVG.Sass, link = "https://sass-lang.com", desc = "Sass is a preprocessor scripting language that is interpreted or compiled into Cascading Style Sheets.", name = "Sass" }
-                , { svg = SVG.logo SVG.Vite, link = "https://vitejs.dev", desc = "Next Generation Frontend Tooling. Base of this project.", name = "Vite" }
-                , { svg = SVG.logo SVG.EsBuild, link = "https://esbuild.github.io", desc = "An extremely fast JavaScript bundler.", name = "EsBuild" }
-                , { svg = SVG.logo SVG.EditorConfig, link = "https://editorconfig.org", desc = "EditorConfig helps maintain consistent coding styles for multiple developers working on the same project across various editors and IDEs.", name = "EditorConfig" }
-                , { svg = SVG.logo SVG.TypeScript, link = "https://www.typescriptlang.org", desc = "TypeScript is JavaScript with syntax for types.", name = "Typescript" }
-                ]
+                in
+                if item_ == initItem then
+                    text ""
+
+                else if Maybe.withDefault -1 model.editId == i then
+                    viewLi <|
+                        view_
+                            ++ [ div [ class "add" ]
+                                    [ input [ onInput <| InputName i, value item_.name ] []
+                                    , input [ onInput <| InputDesc i, value item_.description ] []
+                                    , p [ classList [ ( "error", True ), ( "hidden", model.error == Nothing ) ] ]
+                                        [ text <| Maybe.withDefault "" model.error ]
+                                    ]
+                               ]
+
+                else
+                    viewLi
+                        view_
+            )
+            (List.range 0 (model.id - 1))
+            -- |> List.concat
+            |> ul [ class "ul" ]
+        , div [ class "add" ]
+            [ input [ onInput <| InputName model.id ] []
+            , input [ onInput <| InputDesc model.id ] []
+            , button [ class "p-3 bg-surface-300", onClick <| AddItem items ] [ text "+" ]
+            , p [ classList [ ( "error", True ), ( "hidden", model.error == Nothing ) ] ]
+                [ text <| Maybe.withDefault "" model.error ]
+            ]
         ]
-    ]
